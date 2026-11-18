@@ -1,0 +1,15 @@
+# Build outputs
+Debug/
+Release/
+
+# IDE-generated settings
+.settings/
+
+# Compiler outputs
+*.o
+*.d
+*.elf
+*.hex
+*.bin
+*.map
+*.su
