@@ -174,3 +174,4 @@ void USART_ApplicationEventCallback(USART_Handle_t *pUSARTHandle,uint8_t AppEven
 
 
 #endif /* INC_STM32F446XX_USART_DRIVER_H_ */
+

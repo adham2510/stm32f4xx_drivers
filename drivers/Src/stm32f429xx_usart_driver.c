@@ -270,18 +270,218 @@ void USART_DeInit(USART_RegDef_t *pUSARTx)
 }
 
 
+/*****************************************************************
+ * @fn          - USART_ClearFlag
+ *
+ * @brief       - This function clears status flag
+ *
+ * @param[in]   - Base address of the U(S)ART peripheral
+ * @param[in]   - Name of flag
+ *
+ * @return      - None
+ *
+ * @Note        - None
+ *
+ *****************************************************************/
+void USART_ClearFlag(USART_RegDef_t *pUSARTx, uint16_t FlagName)
+{
+    pUSARTx->SR &= ~(1 << FlagName);
+}
 
 
+/*****************************************************************
+ * @fn          - USART_GetFlagStatus
+ *
+ * @brief       - This function returns if bit in register is
+ *                set or not
+ *
+ * @param[in]   - Base address of the U(S)ART peripheral
+ * @param[in]   - Name of flag
+ *
+ * @return      - Flag status (True/False)
+ *
+ * @Note        - None
+ *
+ *****************************************************************/
+uint8_t USART_GetFlagStatus(USART_RegDef_t *pUSARTx , uint32_t FlagName)
+{
+    if(pUSARTx->SR & FlagName)
+    {
+        return FLAG_SET;
+    }
+    return FLAG_RESET;
+}
 
 
+/******************************************************************
+ * @fn          - USART_SendData
+ *
+ * @brief       - This function sends data over U(S)ART
+ *
+ * @param[in]   - Pointer to U(S)ART Handle Structure
+ * @param[in]   - Pointer to Tx Buffer
+ * @param[in]   - Length of Tx Buffer
+ *
+ * @return      - None
+ *
+ * @Note        - None
+ *
+ *****************************************************************/
+void USART_SendData(USART_Handle_t *pUSARTHandle, uint8_t *pTxBuffer, uint32_t Length)
+{
+	for(uint32_t i = 0; i < Length; i++)
+	{
+		while(! USART_GetFlagStatus(pUSARTHandle->pUSARTx, USART_FLAG_TXE));
+
+		if(pUSARTHandle->USART_Config.USART_WordLength == USART_WORDLEN_9BITS)
+		{
+			if(pUSARTHandle->USART_Config.USART_ParityControl == USART_PARITY_DISABLE)
+			{
+				pUSARTHandle->pUSARTx->DR = (*((uint16_t*)pTxBuffer) & (uint16_t)0x01FF);
+
+				pTxBuffer++;
+				pTxBuffer++;
+			}
+			else
+			{
+				pUSARTHandle->pUSARTx->DR = (*pTxBuffer & (uint8_t)0xFF);
+
+				pTxBuffer++;
+			}
+
+		}
+		else
+		{
+			pUSARTHandle->pUSARTx->DR = (*pTxBuffer & (uint8_t)0xFF);
+
+			pTxBuffer++;
+		}
+	}
+
+	while(! USART_GetFlagStatus(pUSARTHandle->pUSARTx, USART_FLAG_TC));
+}
 
 
+/******************************************************************
+ * @fn          - USART_ReceiveData
+ *
+ * @brief       - This function receives data over U(S)ART
+ *
+ * @param[in]   - Pointer to U(S)ART Handle Structure
+ * @param[in]   - Pointer to Rx Buffer
+ * @param[in]   - Length of Rx Buffer
+ *
+ * @return      - None
+ *
+ * @Note        - None
+ *
+ *****************************************************************/
+void USART_ReceiveData(USART_Handle_t *pUSARTHandle, uint8_t *pRxBuffer, uint32_t Length)
+{
+	for(uint32_t i = 0; i < Length; i++)
+	{
+		while(! USART_GetFlagStatus(pUSARTHandle->pUSARTx, USART_FLAG_RXNE));
+
+		if(pUSARTHandle->USART_Config.USART_WordLength == USART_WORDLEN_9BITS)
+		{
+			if(pUSARTHandle->USART_Config.USART_ParityControl == USART_PARITY_DISABLE)
+			{
+				*((uint16_t*)pRxBuffer) = (pUSARTHandle->pUSARTx->DR & (uint16_t)0x01FF);
+
+				pRxBuffer++;
+				pRxBuffer++;
+			}
+			else
+			{
+				*pRxBuffer = (pUSARTHandle->pUSARTx->DR & (uint8_t)0xFF);
+
+				pRxBuffer++;
+			}
+		}
+		else
+		{
+			if(pUSARTHandle->USART_Config.USART_ParityControl == USART_PARITY_DISABLE)
+			{
+				*pRxBuffer = (pUSARTHandle->pUSARTx->DR & (uint8_t)0xFF);
+
+				pRxBuffer++;
+			}
+			else
+			{
+				*pRxBuffer = (pUSARTHandle->pUSARTx->DR & (uint8_t)0x7F);
+
+				pRxBuffer++;
+			}
+		}
+	}
+}
 
 
+/*******************************************************************
+ * @fn          - USART_SetBaudRate
+ *
+ * @brief       - This function sets U(S)ART Baudrate
+ *
+ * @param[in]   - Base address of the U(S)ART peripheral
+ * @param[in]   - Baud rate value
+ *
+ * @return      - None
+ *
+ * @Note        - None
+ *
+ ********************************************************************/
+void USART_SetBaudRate(USART_RegDef_t *pUSARTx, uint32_t BaudRate)
+{
+    /*APB Clock*/
+    uint32_t PCLKx;
 
+	uint32_t usartdiv;
 
+    /*Mantissa and Fraction values*/
+	uint32_t M_part, F_part;
 
+	uint32_t tempreg = 0;
 
+	/*Getting value of APB bus clock into the variable PCLKxn*/
+	if(pUSARTx == USART1 || pUSARTx == USART6)
+	{
+		PCLKx = RCC_GetPCLK2Value();
+	}
+	else
+	{
+		PCLKx = RCC_GetPCLK1Value();
+	}
 
+	/* Checking OVER8 Configuration bit */
+	if(pUSARTx->CR1 & (1 << USART_CR1_OVER8))
+	{
+		/*OVER8 = 1*/
+		usartdiv = ((25 * PCLKx)/(2 * BaudRate));
+	}
+	else
+	{
+		/*OVER8 = 0*/
+		usartdiv = ((25 * PCLKx)/(4 * BaudRate));
+	}
 
+	M_part = usartdiv/100;
 
+	tempreg |= (M_part << 4);
+
+	F_part = (usartdiv - (M_part * 100));
+
+	if(pUSARTx->CR1 & (1 << USART_CR1_OVER8))
+	{
+		/*OVER8 = 1*/
+		F_part = (((F_part * 8) + 50) / 100) & ((uint8_t)0x07);
+	}
+	else
+	{
+		/*OVER8 = 0*/
+		F_part = (((F_part * 16) + 50) / 100) & ((uint8_t)0x0F);
+	}
+
+	tempreg |= F_part;
+
+	pUSARTx->BRR = tempreg;
+}

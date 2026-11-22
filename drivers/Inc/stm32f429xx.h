@@ -499,5 +499,6 @@ typedef struct
 
 #include "stm32f429xx_gpio_driver.h"
 #include "stm32f429xx_usart_driver.h"
+#include "stm32f429xx_rcc_driver.h"
 
 #endif /* INC_STM32F429XX_H_ */
