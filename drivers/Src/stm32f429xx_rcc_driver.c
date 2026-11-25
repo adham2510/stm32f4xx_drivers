@@ -31,7 +31,7 @@ uint32_t RCC_GetPCLK1Value(void)
 
 	if(clksrc == 0)
 	{
-		SystemClk = ‎16000000;
+		SystemClk = 16000000;
 	}
 	else if(clksrc == 1)
 	{
@@ -51,7 +51,7 @@ uint32_t RCC_GetPCLK1Value(void)
 	}
 	else
 	{
-		ahbp = AHB_Prescale[temp - 8];
+		ahbp = AHB_Prescaler[temp - 8];
 	}
 
 	/*APB1*/
@@ -63,7 +63,7 @@ uint32_t RCC_GetPCLK1Value(void)
 	}
 	else
 	{
-		apb1p = APBx_Prescale[temp - 4];
+		apb1p = APBx_Prescaler[temp - 4];
 	}
 
 	pclk1 = (SystemClk/ahbp) / apb1p;
@@ -113,7 +113,7 @@ uint32_t RCC_GetPCLK2Value(void)
 	}
 	else
 	{
-		ahbp = AHB_Prescale[temp - 8];
+		ahbp = AHB_Prescaler[temp - 8];
 	}
 
 	/*APB1*/
@@ -125,7 +125,7 @@ uint32_t RCC_GetPCLK2Value(void)
 	}
 	else
 	{
-		apb2p = APBx_Prescale[temp - 4];
+		apb2p = APBx_Prescaler[temp - 4];
 	}
 
 	pclk2 = (SystemClk/ahbp) / apb2p;
